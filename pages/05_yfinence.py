@@ -7,7 +7,6 @@ from datetime import datetime, timedelta
 st.set_page_config(layout="wide")
 st.title("🌐 글로벌 시가총액 Top 10 기업 주가 및 누적 수익률 시각화")
 
-# 글로벌 시가총액 Top 10 기업 (예시)
 top10_tickers = {
     "Apple (AAPL)": "AAPL",
     "Microsoft (MSFT)": "MSFT",
@@ -21,7 +20,6 @@ top10_tickers = {
     "Visa (V)": "V",
 }
 
-# 사용자 선택
 selected_companies = st.multiselect(
     "관심 있는 기업을 선택하세요 (최소 1개 이상)",
     options=list(top10_tickers.keys()),
@@ -32,7 +30,6 @@ if not selected_companies:
     st.warning("최소 한 개 이상의 기업을 선택해주세요.")
     st.stop()
 
-# 최근 1년 기간 설정
 end_date = datetime.today()
 start_date = end_date - timedelta(days=365)
 
@@ -43,30 +40,57 @@ def fetch_data(tickers, start, end):
         start=start.strftime("%Y-%m-%d"),
         end=end.strftime("%Y-%m-%d"),
         progress=False,
-        group_by='ticker'
+        group_by='ticker',
+        auto_adjust=False
     )
     return data
 
 tickers = [top10_tickers[c] for c in selected_companies]
 data = fetch_data(tickers, start_date, end_date)
 
-# 데이터 전처리: 단일/다중 티커 대응
 price_dfs = {}
-for ticker in tickers:
-    if len(tickers) == 1:
-        # 단일 티커인 경우
+
+if len(tickers) == 1:
+    # 단일 티커일 경우
+    ticker = tickers[0]
+    # 'Adj Close' 컬럼 존재하는지 확인
+    if 'Adj Close' in data.columns:
         price_dfs[ticker] = data['Adj Close'].dropna()
     else:
-        # 다중 티커인 경우
-        price_dfs[ticker] = data[ticker]['Adj Close'].dropna()
+        st.error(f"{ticker} 데이터에서 'Adj Close' 컬럼을 찾을 수 없습니다.")
+        st.stop()
+else:
+    # 멀티 티커일 경우
+    # 컬럼 멀티 인덱스 확인
+    if isinstance(data.columns, pd.MultiIndex):
+        for ticker in tickers:
+            if ticker in data.columns.get_level_values(0):
+                if 'Adj Close' in data[ticker].columns:
+                    price_dfs[ticker] = data[ticker]['Adj Close'].dropna()
+                else:
+                    st.warning(f"{ticker} 데이터에 'Adj Close' 컬럼이 없습니다.")
+            else:
+                st.warning(f"{ticker} 데이터가 존재하지 않습니다.")
+    else:
+        # 멀티 티커인데 단일 인덱스 컬럼일 경우 (가끔 발생)
+        for ticker in tickers:
+            col_name = f'Adj Close'
+            if col_name in data.columns:
+                price_dfs[ticker] = data[col_name].dropna()
+            else:
+                st.warning(f"{ticker} 데이터에서 'Adj Close' 컬럼을 찾을 수 없습니다.")
+
+if not price_dfs:
+    st.error("적절한 데이터가 없어 시각화를 진행할 수 없습니다.")
+    st.stop()
 
 # 1) 주가 선 그래프
 fig_price = go.Figure()
-for ticker in tickers:
+for ticker, series in price_dfs.items():
     fig_price.add_trace(
         go.Scatter(
-            x=price_dfs[ticker].index,
-            y=price_dfs[ticker].values,
+            x=series.index,
+            y=series.values,
             mode='lines',
             name=ticker
         )
@@ -82,13 +106,12 @@ st.plotly_chart(fig_price, use_container_width=True)
 
 # 2) 누적 수익률 계산 및 그래프
 cumulative_returns = pd.DataFrame()
-for ticker in tickers:
-    prices = price_dfs[ticker]
-    returns = prices.pct_change().fillna(0)
+for ticker, series in price_dfs.items():
+    returns = series.pct_change().fillna(0)
     cumulative_returns[ticker] = (1 + returns).cumprod() - 1
 
 fig_return = go.Figure()
-for ticker in tickers:
+for ticker in cumulative_returns.columns:
     fig_return.add_trace(
         go.Scatter(
             x=cumulative_returns.index,
