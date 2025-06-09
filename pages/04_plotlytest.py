@@ -103,3 +103,5 @@ def extract_age(col_name):
     if match:
         return int(match.group(1))
     return None
+st.write("남성 컬럼명 예시:", list(male_data.index)[:5])
+st.write("여성 컬럼명 예시:", list(female_data.index)[:5])
