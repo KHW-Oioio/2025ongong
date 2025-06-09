@@ -1,4 +1,3 @@
-# 04_plotlytest.py
 import streamlit as st
 import pandas as pd
 import plotly.express as px
@@ -25,9 +24,10 @@ row = gender_df[gender_df["행정구역"] == selected_region].iloc[0]
 male_data = row.filter(like="남_")
 female_data = row.filter(like="여_")
 
-# 총인구수 등 제외
+# 총인구수 등 제외할 컬럼
 drop_male = ["2025년05월_남_총인구수", "2025년05월_남_연령구간인구수"]
 drop_female = ["2025년05월_여_총인구수", "2025년05월_여_연령구간인구수"]
+
 male_data = male_data.drop([col for col in drop_male if col in male_data.index])
 female_data = female_data.drop([col for col in drop_female if col in female_data.index])
 
@@ -49,30 +49,6 @@ ages = [extract_age(col) for col in valid_cols]
 male_counts = [int(str(male_data[col]).replace(",", "")) * -1 for col in valid_cols]
 female_counts = [int(str(female_data[col]).replace(",", "")) for col in valid_cols]
 
-# 슬라이더 필터 적용
-filtered = [(a, m, f) for a, m, f in zip(ages, male_counts, female_counts) if age_range[0] <= a <= age_range[1]]
-filtered_ages, filtered_male, filtered_female = zip(*filtered)
-
-# 시각화용 데이터프레임 생성
-df_plot = pd.DataFrame({
-    "연령": list(filtered_ages) * 2,
-    "인구수": list(filtered_male) + list(filtered_female),
-    "성별": ["남"] * len(filtered_ages) + ["여"] * len(filtered_ages)
-})
-
-# plotly 인구 피라미드 그래프
-fig = px.bar(
-    df_plot,
-    x="인구수",
-    y="연령",
-    color="성별",
-    orientation="h",
-    title=f"{selected_region}의 연령별 성별 인구 분포",
-    height=600,
-    color_discrete_map={"남": "blue", "여": "crimson"}
-)
-fig.update_layout(yaxis=dict(dtick=5), xaxis_title="인구수", yaxis_title="연령(세)")
-st.plotly_chart(fig, use_container_width=True)
 # 연령 필터 적용
 filtered = [
     (a, m, f)
@@ -92,7 +68,7 @@ else:
         "성별": ["남"] * len(filtered_ages) + ["여"] * len(filtered_ages)
     })
 
-    # 인구 피라미드 시각화
+    # plotly 인구 피라미드 그래프
     fig = px.bar(
         df_plot,
         x="인구수",
@@ -101,6 +77,11 @@ else:
         orientation="h",
         title=f"{selected_region}의 연령별 성별 인구 분포",
         height=600,
+        color_discrete_map={"남": "blue", "여": "crimson"}
+    )
+    fig.update_layout(yaxis=dict(dtick=5), xaxis_title="인구수", yaxis_title="연령(세)")
+    st.plotly_chart(fig, use_container_width=True)
+
         color_discrete_map={"남": "blue", "여": "crimson"}
     )
     fig.update_layout(yaxis=dict(dtick=5), xaxis_title="인구수", yaxis_title="연령(세)")
