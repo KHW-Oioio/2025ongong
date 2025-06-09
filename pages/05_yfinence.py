@@ -1,7 +1,6 @@
 import streamlit as st
 import yfinance as yf
 import pandas as pd
-import plotly.express as px
 import plotly.graph_objects as go
 from datetime import datetime, timedelta
 
@@ -22,7 +21,7 @@ top10_tickers = {
     "Visa (V)": "V",
 }
 
-# 사용자에게 종목 선택 받기 (최소 1개 이상)
+# 사용자 선택
 selected_companies = st.multiselect(
     "관심 있는 기업을 선택하세요 (최소 1개 이상)",
     options=list(top10_tickers.keys()),
@@ -33,11 +32,10 @@ if not selected_companies:
     st.warning("최소 한 개 이상의 기업을 선택해주세요.")
     st.stop()
 
-# 데이터 가져올 기간 (최근 1년)
+# 최근 1년 기간 설정
 end_date = datetime.today()
 start_date = end_date - timedelta(days=365)
 
-# yfinance로 주가 데이터 불러오기
 @st.cache_data(ttl=3600)
 def fetch_data(tickers, start, end):
     data = yf.download(
@@ -52,19 +50,18 @@ def fetch_data(tickers, start, end):
 tickers = [top10_tickers[c] for c in selected_companies]
 data = fetch_data(tickers, start_date, end_date)
 
-# 데이터 전처리
+# 데이터 전처리: 단일/다중 티커 대응
 price_dfs = {}
 for ticker in tickers:
     if len(tickers) == 1:
-        # yfinance는 단일 ticker 선택시 DataFrame이 다르게 나옴
-        df = data.copy()
+        # 단일 티커인 경우
+        price_dfs[ticker] = data['Adj Close'].dropna()
     else:
-        df = data[ticker]
-    price_dfs[ticker] = df['Adj Close'].dropna()
+        # 다중 티커인 경우
+        price_dfs[ticker] = data[ticker]['Adj Close'].dropna()
 
-# 1) 주가 선 그래프 그리기
+# 1) 주가 선 그래프
 fig_price = go.Figure()
-
 for ticker in tickers:
     fig_price.add_trace(
         go.Scatter(
@@ -81,19 +78,16 @@ fig_price.update_layout(
     yaxis_title="주가(USD)",
     hovermode="x unified"
 )
-
 st.plotly_chart(fig_price, use_container_width=True)
 
 # 2) 누적 수익률 계산 및 그래프
 cumulative_returns = pd.DataFrame()
-
 for ticker in tickers:
     prices = price_dfs[ticker]
     returns = prices.pct_change().fillna(0)
     cumulative_returns[ticker] = (1 + returns).cumprod() - 1
 
 fig_return = go.Figure()
-
 for ticker in tickers:
     fig_return.add_trace(
         go.Scatter(
@@ -111,5 +105,4 @@ fig_return.update_layout(
     hovermode="x unified",
     yaxis_tickformat=".2%"
 )
-
 st.plotly_chart(fig_return, use_container_width=True)
