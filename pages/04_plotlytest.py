@@ -81,3 +81,18 @@ else:
     )
     fig.update_layout(yaxis=dict(dtick=5), xaxis_title="인구수", yaxis_title="연령(세)")
     st.plotly_chart(fig, use_container_width=True)
+
+
+st.write("유효한 컬럼들:", valid_cols)
+st.write("추출한 연령들:", [extract_age(col) for col in valid_cols])
+st.write("선택한 연령대:", age_range)
+st.write("연령별 남성 인구수:", male_counts)
+st.write("연령별 여성 인구수:", female_counts)
+
+filtered = [
+    (a, m, f)
+    for a, m, f in zip(ages, male_counts, female_counts)
+    if age_range[0] <= a <= age_range[1]
+]
+
+st.write("필터링된 데이터:", filtered)
