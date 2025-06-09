@@ -80,7 +80,6 @@ filtered = [
     if age_range[0] <= a <= age_range[1]
 ]
 
-# 데이터 없을 경우 처리
 if not filtered:
     st.warning("선택한 연령대에는 데이터가 없습니다. 다른 범위를 선택해주세요.")
 else:
