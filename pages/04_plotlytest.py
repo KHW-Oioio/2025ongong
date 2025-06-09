@@ -96,3 +96,10 @@ filtered = [
 ]
 
 st.write("필터링된 데이터:", filtered)
+def extract_age(col_name):
+    # 컬럼명 중 연령 정보 추출할 부분만 가져오기 (맨 뒤에 '_0세' 혹은 '_5세 이상' 같은 형태 가정)
+    age_part = col_name.split('_')[-1]  # 예: "0세", "5세 이상"
+    match = re.search(r"(\d+)(세|세 이상)?", age_part)
+    if match:
+        return int(match.group(1))
+    return None
