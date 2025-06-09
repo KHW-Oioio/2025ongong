@@ -73,3 +73,36 @@ fig = px.bar(
 )
 fig.update_layout(yaxis=dict(dtick=5), xaxis_title="인구수", yaxis_title="연령(세)")
 st.plotly_chart(fig, use_container_width=True)
+# 연령 필터 적용
+filtered = [
+    (a, m, f)
+    for a, m, f in zip(ages, male_counts, female_counts)
+    if age_range[0] <= a <= age_range[1]
+]
+
+# 데이터 없을 경우 처리
+if not filtered:
+    st.warning("선택한 연령대에는 데이터가 없습니다. 다른 범위를 선택해주세요.")
+else:
+    filtered_ages, filtered_male, filtered_female = zip(*filtered)
+
+    # 시각화용 데이터프레임 생성
+    df_plot = pd.DataFrame({
+        "연령": list(filtered_ages) * 2,
+        "인구수": list(filtered_male) + list(filtered_female),
+        "성별": ["남"] * len(filtered_ages) + ["여"] * len(filtered_ages)
+    })
+
+    # 인구 피라미드 시각화
+    fig = px.bar(
+        df_plot,
+        x="인구수",
+        y="연령",
+        color="성별",
+        orientation="h",
+        title=f"{selected_region}의 연령별 성별 인구 분포",
+        height=600,
+        color_discrete_map={"남": "blue", "여": "crimson"}
+    )
+    fig.update_layout(yaxis=dict(dtick=5), xaxis_title="인구수", yaxis_title="연령(세)")
+    st.plotly_chart(fig, use_container_width=True)
