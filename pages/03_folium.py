@@ -24,3 +24,4 @@ for name, lat, lon in st.session_state.places:
     folium.Marker([lat, lon], tooltip=name).add_to(m)
 
 st_folium(m, width=700, height=500)
+ 
