@@ -1,8 +1,12 @@
+
 import streamlit as st
 import pandas as pd
 import numpy as np
-import matplotlib.pyplot as plt 
+import matplotlib.pyplot as plt
 
+import matplotlib
+matplotlib.rc('font', family='Malgun Gothic')  # 한글 폰트 설정
+plt.rcParams['axes.unicode_minus'] = False 
 # 가상의 반도체 기업 데이터 생성
 data = {
     '기업명': ['삼성전자', 'SK하이닉스', '마이크론', '인텔', 'TSMC'],
