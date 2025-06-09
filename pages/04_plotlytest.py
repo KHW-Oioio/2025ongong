@@ -81,8 +81,3 @@ else:
     )
     fig.update_layout(yaxis=dict(dtick=5), xaxis_title="인구수", yaxis_title="연령(세)")
     st.plotly_chart(fig, use_container_width=True)
-
-        color_discrete_map={"남": "blue", "여": "crimson"}
-    )
-    fig.update_layout(yaxis=dict(dtick=5), xaxis_title="인구수", yaxis_title="연령(세)")
-    st.plotly_chart(fig, use_container_width=True)
