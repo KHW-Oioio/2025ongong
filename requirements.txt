@@ -3,3 +3,4 @@ plotly
 streamlit-folium
 pandas
 yfinance
+matplotlib
